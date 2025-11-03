@@ -1,7 +1,7 @@
 // /app/dashboard/page.tsx
 "use client"
 
-import React from "react"
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,8 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectForm } from "@/components/ui/ProjectForm"
 import { TasksTable } from "@/components/TaskTable"
 
-// ===== ADICIONES MÍNIMAS PARA LA TAREA =====
-import { DashboardProvider } from "@/components/DashboardContext" // para que no falle useDashboard de TasksTable
+// === añadidos mínimos requeridos por la tarea (sin alterar tu orden) ===
+import { DashboardProvider } from "@/components/DashboardContext"
 import { Calendar } from "@/components/ui/calendar"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import {
@@ -23,11 +23,11 @@ import {
     PaginationNext,
 } from "@/components/ui/pagination"
 import { Loader2 } from "lucide-react"
-// ===========================================
+// ======================================================================
 
 export default function DashboardPage() {
     return (
-        <DashboardProvider>{/* <-- añadido (envolver sin cambiar orden interno) */}
+        <DashboardProvider>
             <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
@@ -68,7 +68,7 @@ export default function DashboardPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* AÑADIDO: CRUD de Tareas + paginación + alert/spinner */}
+                            {/* añadido: CRUD + paginación + alert/spinner */}
                             <TasksCRUD />
                         </TabsContent>
                         {/* Tab: Overview */}
@@ -96,7 +96,7 @@ export default function DashboardPage() {
                                         </svg>
                                     </CardHeader>
                                     <CardContent>
-                                        {/* cambiado valor duro -> métrica dinámica */}
+                                        {/* dinámica */}
                                         <div className="text-2xl font-bold"><SummaryMetricTotalProjects /></div>
                                         <p className="text-xs text-muted-foreground">
                                             +2 desde el mes pasado
@@ -123,7 +123,7 @@ export default function DashboardPage() {
                                         </svg>
                                     </CardHeader>
                                     <CardContent>
-                                        {/* cambiado valor duro -> métrica dinámica */}
+                                        {/* dinámica */}
                                         <div className="text-2xl font-bold"><SummaryMetricCompletedTasks /></div>
                                         <p className="text-xs text-muted-foreground">
                                             +19% desde la semana pasada
@@ -179,7 +179,7 @@ export default function DashboardPage() {
                                         </svg>
                                     </CardHeader>
                                     <CardContent>
-                                        {/* cambiado valor duro -> métrica dinámica */}
+                                        {/* dinámica */}
                                         <div className="text-2xl font-bold"><SummaryMetricActiveMembers /></div>
                                         <p className="text-xs text-muted-foreground">
                                             +1 nuevo miembro
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* AÑADIDOS: Calendar + Métricas resumidas inline */}
+                            {/* añadidos: calendar + métricas inline */}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Card>
                                     <CardHeader>
@@ -348,10 +348,9 @@ export default function DashboardPage() {
                                                             <circle cx="9" cy="7" r="4" />
                                                             <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                                                         </svg>
-                                                        {/* AÑADIDO: cuenta de miembros real por proyecto */}
-                                                        <ProjectMembersCount projectTitle={project.title} />
+                                                        {/* preserva tu texto original + añade conteo real */}
+                                                        {project.team} miembros · asignados: <ProjectMembersCount projectTitle={project.title} />
                                                     </div>
-                                                    {/* AÑADIDO: ver detalles funcional */}
                                                     <Button size="sm" variant="ghost" onClick={() => projectDetails(project.title)}>
                                                         Ver detalles
                                                     </Button>
@@ -362,7 +361,7 @@ export default function DashboardPage() {
                                 ))}
                             </div>
 
-                            {/* AÑADIDO: gestor con eliminación + paginación + spinner/alert */}
+                            {/* añadido: manager con eliminar + paginación + spinner/alert */}
                             <ProjectsManager />
                         </TabsContent>
 
@@ -409,7 +408,7 @@ export default function DashboardPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* AÑADIDO: CRUD real de Equipo con campos pedidos */}
+                            {/* añadido: CRUD real con campos requeridos */}
                             <TeamCRUD />
                         </TabsContent>
 
@@ -427,7 +426,7 @@ export default function DashboardPage() {
                                         Configuración en desarrollo...
                                     </p>
 
-                                    {/* AÑADIDO: Formulario de Configuración simulado */}
+                                    {/* añadido: formulario simulado de configuración */}
                                     <SettingsSim />
                                 </CardContent>
                             </Card>
@@ -440,11 +439,8 @@ export default function DashboardPage() {
 }
 
 /* =========================================================
-   === COMPONENTES HIJOS + “STORE” EN MEMORIA (LOCAL) ===
-   === (no se tocó el JSX original ni su orden)        ===
+   === “STORE” EN MEMORIA + COMPONENTES AUXILIARES (abajo)
    ========================================================= */
-
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 
 type Project = { id: number; title: string; description?: string; status?: string; progress?: number }
 type Member = { userId: number; role: string; name: string; email: string; position?: string; birthdate?: string; phone?: string; projectId?: number; isActive: boolean }
@@ -477,20 +473,16 @@ const listeners = new Set<() => void>()
 const emit = () => listeners.forEach(l => l())
 const subscribe = (cb: () => void) => { listeners.add(cb); return () => listeners.delete(cb) }
 const getSnapshot = () => mem
+function useMem() { return useSyncExternalStore(subscribe, getSnapshot, getSnapshot) }
 
-function useMem() {
-    // @ts-ignore
-    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
-}
-
-/* Helpers con retraso (spinner demo) */
+// helper con retardo (spinner demo)
 function withDelay<T>(ms: number, fn: () => T | void, onFinally?: () => void): Promise<T | void> {
     return new Promise(res => setTimeout(() => { const r = fn(); onFinally?.(); res(r) }, ms))
 }
 
-/* Acciones CRUD “backend” simulado */
+// acciones CRUD simuladas
 const actions = {
-    // Projects
+    // projects
     deleteProject(id: number) {
         mem = {
             ...mem,
@@ -500,7 +492,7 @@ const actions = {
         }
         emit()
     },
-    // Members
+    // members
     addMember(m: Omit<Member, "userId">) {
         const newId = mem.members.length ? Math.max(...mem.members.map(x => x.userId)) + 1 : 1
         mem = { ...mem, members: [...mem.members, { ...m, userId: newId }] }; emit()
@@ -511,7 +503,7 @@ const actions = {
     deleteMember(id: number) {
         mem = { ...mem, members: mem.members.filter(m => m.userId !== id), tasks: mem.tasks.map(t => t.userId === id ? { ...t, userId: null } : t) }; emit()
     },
-    // Tasks
+    // tasks
     addTask(t: Omit<Task, "id">) {
         const newId = mem.tasks.length ? Math.max(...mem.tasks.map(x => x.id)) + 1 : 1
         mem = { ...mem, tasks: [...mem.tasks, { ...t, id: newId }] }; emit()
@@ -522,19 +514,16 @@ const actions = {
     deleteTask(id: number) {
         mem = { ...mem, tasks: mem.tasks.filter(t => t.id !== id) }; emit()
     },
-    // Settings
+    // settings
     saveSettings(s: Partial<Settings>) {
         mem = { ...mem, settings: { ...mem.settings, ...s } }; emit()
-        // aplicar color del tema al <html> sin tocar tailwind.config
-        if (s.themeColor) {
-            if (typeof document !== "undefined") {
-                document.documentElement.style.setProperty("--brand", s.themeColor as string)
-            }
+        if (s.themeColor && typeof document !== "undefined") {
+            document.documentElement.style.setProperty("--brand", s.themeColor as string)
         }
     }
 }
 
-/* === Métricas Resumen (dinámicas) === */
+/* === métricas resumen dinámicas === */
 function SummaryMetricTotalProjects() { const snap = useMem(); return <>{snap.projects.length}</> }
 function SummaryMetricCompletedTasks() { const snap = useMem(); return <>{snap.tasks.filter(t => t.status === "Completado").length}</> }
 function SummaryMetricActiveMembers() { const snap = useMem(); return <>{snap.members.filter(m => m.isActive).length}</> }
@@ -564,26 +553,19 @@ function Metric({ label, value }: { label: string; value: React.ReactNode }) {
     )
 }
 
-/* === Proyectos === */
+/* === proyectos: utilidades === */
 function ProjectMembersCount({ projectTitle }: { projectTitle: string }) {
     const snap = useMem()
     const project = snap.projects.find(p => p.title === projectTitle)
     const count = project ? snap.members.filter(m => m.projectId === project.id).length : 0
-    return <span className="font-medium">{count} miembros</span>
+    return <span className="font-medium">{count}</span>
 }
 function projectDetails(projectTitle: string) {
     const snap = getSnapshot()
     const p = snap.projects.find(x => x.title === projectTitle)
     if (!p) return alert("Proyecto no encontrado")
     const count = snap.members.filter(m => m.projectId === p.id).length
-    alert(`Detalles:\n• Título: ${p.title}\n• Estado: ${p.status}\n• Progreso: ${p.progress ?? 0}%\n• Miembros: ${count}`)
-}
-function onDeleteProjectById(id: number) {
-    actions.deleteProject(id)
-}
-function onDeleteProjectByTitle(title: string) {
-    const p = getSnapshot().projects.find(x => x.title === title)
-    if (p) onDeleteProjectById(p.id)
+    alert(`Detalles:\n• Título: ${p.title}\n• Estado: ${p.status}\n• Progreso: ${p.progress ?? 0}%\n• Miembros asignados: ${count}`)
 }
 
 function ProjectsManager() {
@@ -635,7 +617,7 @@ function ProjectsManager() {
                             </CardHeader>
                             <CardContent>
                                 <div className="flex items-center justify-between">
-                                    <div className="text-sm text-muted-foreground">Miembros: <ProjectMembersCount projectTitle={p.title} /></div>
+                                    <div className="text-sm text-muted-foreground">Miembros asignados: <ProjectMembersCount projectTitle={p.title} /></div>
                                     <div className="flex gap-2">
                                         <Button size="sm" variant="outline" onClick={() => projectDetails(p.title)}>Ver detalles</Button>
                                         <Button size="sm" variant="ghost" onClick={() => onDelete(p.id)} disabled={loadingId !== null}>
@@ -661,7 +643,7 @@ function ProjectsManager() {
     )
 }
 
-/* === Equipo (CRUD) === */
+/* === equipo (CRUD) === */
 function TeamCRUD() {
     const snap = useMem()
     const empty = { userId: 0, role: "", name: "", email: "", position: "", birthdate: "", phone: "", projectId: 0, isActive: true }
@@ -685,7 +667,16 @@ function TeamCRUD() {
     }
     const onEdit = (id: number) => {
         const m = snap.members.find(x => x.userId === id); if (!m) return
-        setForm({ ...m }); setEditing(id)
+        // Defaults para cumplir tipos no opcionales del form
+        setForm({
+            ...empty,
+            ...m,
+            position: m.position ?? "",
+            birthdate: m.birthdate ?? "",
+            phone: m.phone ?? "",
+            projectId: m.projectId ?? 0,
+        })
+        setEditing(id)
     }
     const onDelete = (id: number) => {
         actions.deleteMember(id); setNotice({ type: "success", msg: "Miembro eliminado." })
@@ -750,7 +741,7 @@ function TeamCRUD() {
     )
 }
 
-/* === Tareas (CRUD + paginación) === */
+/* === tareas (CRUD + paginación) === */
 function TasksCRUD() {
     const snap = useMem()
     const empty: Omit<Task, "id"> = { description: "", projectId: 0, status: "Pendiente", priority: "Media", userId: null, dateline: "" }
@@ -868,7 +859,7 @@ function TasksCRUD() {
     )
 }
 
-/* === Configuración (simulada) === */
+/* === configuración simulada === */
 function SettingsSim() {
     const snap = useMem()
     const [themeColor, setThemeColor] = useState(snap.settings.themeColor)
