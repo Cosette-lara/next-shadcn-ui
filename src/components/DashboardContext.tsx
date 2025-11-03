@@ -60,6 +60,7 @@ type DashboardContextValue = {
     addMember: (m: Omit<Member, "userId">) => Member
     updateMember: (userId: number, updates: Partial<Member>) => void
     deleteMember: (userId: number) => void
+    toggleMemberActive: (userId: number) => void // ⬅️ agregado
     // settings
     saveSettings: (s: Settings) => void
 }
@@ -144,6 +145,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         // optionally remove references from tasks
         setTasks(prev => prev.map(t => (t.userId === userId ? { ...t, userId: null, assignee: "N/A" } : t)))
     }
+    const toggleMemberActive = (userId: number) => {
+        setMembers(prev => prev.map(m => (m.userId === userId ? { ...m, isActive: !m.isActive } : m)))
+    }
 
     // Settings
     const saveSettings = (s: Settings) => {
@@ -164,6 +168,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         addMember,
         updateMember,
         deleteMember,
+        toggleMemberActive, // ⬅️ agregado
         saveSettings,
     }
 
