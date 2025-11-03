@@ -30,7 +30,8 @@ export function TeamManager() {
                 position: form.position,
                 birthdate: form.birthdate,
                 phone: form.phone,
-                projectId: form.projectId ? Number(form.projectId) : null
+                projectId: form.projectId ? Number(form.projectId) : null,
+                isActive: true, 
             });
             setLoading(false);
             setOpen(false);
