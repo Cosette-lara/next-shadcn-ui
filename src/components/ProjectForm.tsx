@@ -23,8 +23,14 @@ export function ProjectForm() {
         if (!form.title.trim()) return setAlert({ type: "error", message: "Título obligatorio" });
         setLoading(true);
         setTimeout(() => {
-            // convert membersText (nombres) -> leave empty array (for simplicity) or parse to ids if needed
-            addProject({ title: form.title, description: form.description, status: "Planificado", progress: 0, members: [] });
+            // ❗ Fix: addProject espera "members" como string, no como array
+            addProject({
+                title: form.title,
+                description: form.description,
+                status: "Planificado",
+                progress: 0,
+                members: form.membersText ?? "",
+            });
             setLoading(false);
             setOpen(false);
             setForm({ title: "", description: "", membersText: "" });
@@ -58,12 +64,20 @@ export function ProjectForm() {
                                 <Input value={form.membersText} onChange={(e) => setForm({ ...form, membersText: e.target.value })} />
                             </div>
 
-                            {alert && <Alert variant={alert.type === "error" ? "destructive" : "default"}><AlertTitle>{alert.type === "error" ? "Error" : "Éxito"}</AlertTitle><AlertDescription>{alert.message}</AlertDescription></Alert>}
+                            {alert && (
+                                <Alert variant={alert.type === "error" ? "destructive" : "default"}>
+                                    <AlertTitle>{alert.type === "error" ? "Error" : "Éxito"}</AlertTitle>
+                                    <AlertDescription>{alert.message}</AlertDescription>
+                                </Alert>
+                            )}
                         </div>
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                            <Button type="submit" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Guardar</Button>
+                            <Button type="submit" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Guardar
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
