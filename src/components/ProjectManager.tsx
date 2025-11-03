@@ -61,8 +61,8 @@ export function ProjectManager() {
     };
 
     const handleShowDetails = (p: Project) => {
-        // Aquí podrías abrir un Dialog más complejo; por simplicidad usamos alert()
-        alert(`Proyecto: ${p.title}\nMiembros: ${p.members || "Sin asignar"}\nProgreso: ${p.progress}%`);
+        // Usa window.alert para no chocar con el estado local "alert"
+        window.alert(`Proyecto: ${p.title}\nMiembros: ${p.members || "Sin asignar"}\nProgreso: ${p.progress}%`);
     };
 
     return (
