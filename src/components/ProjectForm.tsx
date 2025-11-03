@@ -21,16 +21,24 @@ export function ProjectForm() {
         e.preventDefault();
         setAlert(null);
         if (!form.title.trim()) return setAlert({ type: "error", message: "Título obligatorio" });
+
+        const teamCount = form.membersText
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean).length;
+
         setLoading(true);
         setTimeout(() => {
-            // ❗ Fix: addProject espera "members" como string, no como array
+            // Enviamos todos los campos requeridos por Omit<Project,"id">
             addProject({
                 title: form.title,
                 description: form.description,
                 status: "Planificado",
                 progress: 0,
-                members: form.membersText ?? "",
+                team: teamCount,              // <- requerido por tu tipo Project
+                members: form.membersText ?? "" // <- string, no array
             });
+
             setLoading(false);
             setOpen(false);
             setForm({ title: "", description: "", membersText: "" });
@@ -53,15 +61,24 @@ export function ProjectForm() {
                         <div className="space-y-3 py-3">
                             <div>
                                 <Label>Título *</Label>
-                                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                                <Input
+                                    value={form.title}
+                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                />
                             </div>
                             <div>
                                 <Label>Descripción</Label>
-                                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                                <Input
+                                    value={form.description}
+                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                />
                             </div>
                             <div>
-                                <Label>Miembros (nombres, coma separados)</Label>
-                                <Input value={form.membersText} onChange={(e) => setForm({ ...form, membersText: e.target.value })} />
+                                <Label>Miembros (nombres o emails separados por coma)</Label>
+                                <Input
+                                    value={form.membersText}
+                                    onChange={(e) => setForm({ ...form, membersText: e.target.value })}
+                                />
                             </div>
 
                             {alert && (
@@ -73,7 +90,9 @@ export function ProjectForm() {
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                                Cancelar
+                            </Button>
                             <Button type="submit" disabled={loading}>
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Guardar
